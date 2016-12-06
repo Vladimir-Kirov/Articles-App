@@ -1,0 +1,156 @@
+<DOCTYPE html>
+	<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Kendo &amp; AngularJS - Articles app</title>
+		<link rel="stylesheet" href="http://cdn.kendostatic.com/2014.3.1411/styles/kendo.common.min.css">
+		<link rel="stylesheet" href="http://cdn.kendostatic.com/2014.3.1411/styles/kendo.default.min.css">
+		<link rel="stylesheet" type="text/css" href="styles/style.css">
+		<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+		<script src="http://cdn.kendostatic.com/2014.3.1411/js/kendo.all.min.js"></script>
+		<script src="http://cdn.kendostatic.com/2011.3.1129/js/cultures/kendo.culture.en-US.min.js"></script>
+		<script src="http://cdn.kendostatic.com/2011.3.1129/js/cultures/kendo.culture.de-DE.min.js"></script>
+		<script src="http://cdn.kendostatic.com/2011.3.1129/js/cultures/kendo.culture.bg-BG.min.js"></script>
+	</head>
+	<body>
+		<ul>
+			<li>
+				<label for="culture">Choose culture:</label>
+				<input name="culture">
+			</li>
+		</ul>
+	<a href="form.html">+ Add new</a>
+	<div id="grid"></div>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			 var localeKey = 'trans['+kendo.culture().name+']'; // by switch case we see whether each of the keys meets the selected language of dropdown menu
+			 function convertLocalStorageToDataSourceFormat(localStorageItem, localeKey) {
+			 	console.log(localeKey);
+	             var tmpObjPreparedForDataSource = {};
+	             $.each(localStorageItem, function(ind, item) { // loop over all items stored inside the localStorageItem
+	             	// debugger;
+	             // item -> contains a structure like {name: 'date', value: '10/07/1972'}
+	               if(item.name.indexOf('[') == -1) { // the current Item is not Locale based
+	                 tmpObjPreparedForDataSource[item.name] = item.value;
+	               } else if(item.name.indexOf(localeKey) != -1) {
+	                 var tmpKey = item.name.replace(localeKey, '');
+	                 tmpObjPreparedForDataSource[tmpKey] = item.value;
+	               }
+	             });
+	             return tmpObjPreparedForDataSource;
+			}
+			var langContainer = [
+				{ text: 'English', value: 1 },
+				{ text: 'German', value: 2 },
+				{ text: 'Bulgarian', value: 3 }
+			];
+			function changeLang(e) {
+				var dataItem = this.dataItem(e.item);
+				var saw = dataItem.value;
+		         switch(saw) {
+		           case 1:
+		             kendo.culture("en-US");
+		             $('#grid').data('kendoGrid').dataSource.read();
+		             $('#grid').data('kendoGrid').refresh();
+		             break;
+		           case 2:
+		             kendo.culture("de-DE");
+		             $('#grid').data('kendoGrid').dataSource.read();
+		             $('#grid').data('kendoGrid').refresh();
+		             break;
+		           case 3:
+		             kendo.culture("bg-BG");
+		             $('#grid').data('kendoGrid').dataSource.read();
+		             $('#grid').data('kendoGrid').refresh();
+		             break;
+		         }
+			};
+			var dataSource = new kendo.data.DataSource({
+				transport: {
+					read: function(options) {
+						if(localStorage.length != 0) {
+			              var localStorageData = JSON.parse(localStorage.articlesData);
+			              var data             = [];
+			              $.each(localStorageData, function(index, item) {
+			              	var r = convertLocalStorageToDataSourceFormat(item, 'trans['+kendo.culture().name+']');
+			              	if (r.title.length > 0) {
+			                	data.push(r);
+			              	}
+			              });
+			            console.log(data);
+			           options.success(data);  
+			           } else {
+			             	options.success([]);
+			           }
+					}
+				},
+				schema: {
+					model: {
+						fields : 
+						{
+							id			: 	{ type: "number", editable: false },
+							content		: 	{ type: "string", editable: true },
+		                    date 		: 	{ type: "string", editable: true },
+		                    isActive	: 	{ type: "boolean", editable: true },
+		                    title		: 	{ type: "string", editable: true },
+						}
+					}
+				}
+			});
+			$("#grid").kendoGrid({
+				dataSource: dataSource,
+				columns: [
+					{
+						field: "id",
+						title: "ID",
+					},
+					{
+						field: "date",
+						title: "Date",
+					},
+					{
+						field: "title",
+						title: "Article name",
+					},
+					{
+						field: "content",
+						title: "Content",
+					},
+					{
+						field: "isActive",
+						title: "Is Active",
+					},
+					{
+						command: [
+									{
+										name: 'Edit', click: function(e) {
+													   var tr = $(e.target).closest("tr"); // get the row for deletion
+								                       var data = this.dataItem(tr); // get the row data so it can be referred later
+								                       window.location.href='form.html?id='+data.id; // take id from URL
+												       }
+									},
+									{ 	name: 'Delete', click: function(e) {
+													  var tr = $(e.target).closest("tr"); // get the row for deletion
+													  // e.preventDefault(e); // prevent page scroll reset
+									                  var data = this.dataItem(tr); // get the row data so it can be referred later
+									                  console.log(data.id);
+									                  var articlesData = JSON.parse(localStorage.articlesData);
+									                  delete articlesData[data.id];
+									                  localStorage.setItem('articlesData', JSON.stringify(articlesData));
+									                  location.reload();
+						                			  }
+									}
+								],
+					}	 
+				],
+				}).data('kendoGrid');
+				$("input[name=culture]").kendoDropDownList({
+					dataSource: langContainer, // read from this array of objects - langContainer
+					dataTextField: 'text', // get the 'key' of object-array - langContainer
+					dataValueField: 'value', // get the 'key' of object-array - langContainer
+					change: changeLang // function changeLang()
+				});
+			});
+	</script>
+</body>
+</html>

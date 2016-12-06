@@ -1,0 +1,121 @@
+<DOCTYPE html>
+<html>
+<head>
+	<title>Form Kendo &amp; AngularJS</title>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="http://cdn.kendostatic.com/2014.3.1411/styles/kendo.common.min.css">
+	<link rel="stylesheet" href="http://cdn.kendostatic.com/2014.3.1411/styles/kendo.metro.min.css">
+	<link rel="stylesheet" href="http://kendo.cdn.telerik.com/2016.1.406/styles/kendo.metro.mobile.min.css">
+	<script src="http://code.jquery.com/jquery-1.12.4.min.js"></script>
+	<script src="http://cdn.kendostatic.com/2014.3.1411/js/kendo.all.min.js"></script>
+</head>
+<body>
+	<form id="myForm">
+		<div id="tabstrip">
+			<ul>
+				<li class="k-state-active">English</li>
+				<li>German</li>
+				<li>Bulgaria</li>
+			</ul>
+			<div>
+				Title: * <input type="text" required validationmessage="Please enter text" name="trans[en-US]title" />
+				<br><br>
+				Content: * <textarea required validationmessage="Please enter some text" name="trans[en-US]content"></textarea>
+				<br>
+				<input type="hidden" name="trans[en-US]isActive" value="0" />
+				<input type="checkbox" name="trans[en-US]isActive" value="1" /> Is Active
+				<br><br>
+				<input type="submit" vaLue="Submit" />
+				<div class="status"></div>
+			</div>
+			<div>
+				Titel: * <input type="text" required validationmessage="Bitte geben Sie den Text" name="trans[de-DE]title" />
+				<br><br>
+				Inhalt: * <textarea required  validationmessage="Bitte geben Sie einen Text" name="trans[de-DE]content"></textarea>
+				<br>
+				<input type="hidden" name="trans[de-DE]isActive" value="0" />
+				<input type="checkbox" name="trans[de-DE]isActive" value="1" /> Ist aktiv
+				<br><br>
+				<input type="submit" value="Senden" />
+				<div class="status1"></div>
+			</div>
+			<div>
+				Заглавие: * <input required validationmessage="Please enter text" name="trans[bg-BG]title" />
+				<br><br>
+				Съдържание: * <textarea required validationmessage="Please enter some text" name="trans[bg-BG]content"></textarea>
+				<br>
+				<input type="hidden" name="trans[bg-BG]isActive" value="0" />
+				<input type="checkbox" name="trans[bg-BG]isActive" value="1" /> е Активен
+				<br><br>
+				<input type="submit" vaLue="Изпрати" />
+				<div class="status2"></div>
+			</div>
+			Date: * <input type="datePicker" required validationmessage="Please enter some date" name="date" />
+			<br><br>
+		</div>
+	</form>
+	
+		</script>
+	</body>
+</html>
+<script>
+	var url = window.location.href;
+	var editId = url.match(/\d$/) ? url.match(/\d$/)[0] : '';
+	var articlesData = JSON.parse(localStorage.getItem('articlesData'));
+		if(editId != '') {
+			var  currentData = articlesData[editId];
+			$.each(currentData, function(index, item) {
+			$('[name="'+item.name+'"]').val(item.value);
+		})
+	}
+	function addId() {
+	 	if(localStorage['id']) {
+	        if(localStorage['id'] == editId) {
+	            localStorage['id'];
+	        }
+	        else {
+	            localStorage['id']++;
+	        }
+	    }
+	    else {
+	        localStorage['id'] = 1;
+	    }
+	    return localStorage['id'];
+	}
+	$('#tabstrip').kendoTabStrip({
+		collapsible: true,
+	});
+	$('textarea').kendoEditor();
+	$("input[type=datePicker]").kendoDatePicker();
+		var validator = $('#myForm').kendoValidator().getKendoValidator();
+	$('input[type=checkbox]').kendoMobileSwitch({
+		onLabel: 'Yes',
+		offLabel: 'No'
+	});
+	$("input[type='submit']").kendoButton({
+		click: function() {
+	  		if(!editId) {
+				var formData = $('#myForm').serializeArray();
+				var id = addId();  		
+				formData.push( {name:'id' , value: id } );
+  				if(!localStorage.articlesData) {
+					var articlesData = {};
+					articlesData[id] = formData;
+  					localStorage.articlesData = JSON.stringify(articlesData);
+  				} 
+  				else {
+  					var current = JSON.parse(localStorage.articlesData);
+  			  		current[id] = formData;
+  					localStorage.articlesData = JSON.stringify(current);
+  				}
+  			} 
+  			else {
+  				var formData = $('form').serializeArray();     
+                formData.push( { name: 'id' , value: editId } );
+                var articlesData = JSON.parse(localStorage.articlesData);
+                articlesData[editId] = formData;
+                localStorage.articlesData = JSON.stringify(articlesData);
+  			}
+  		}
+	}); // end Kendo button 
+</script>
